@@ -10,5 +10,6 @@ class Command(BaseCommand):
         username = options['username']
         
         # KWETSBAAR: Direct user input in shell command
-        cmd = f"mysqldump -u root mydb_users_{username} > backup_{username}.sql"
+        # Gebruik SQLite dump in plaats van MySQL
+        cmd = f"sqlite3 db.sqlite3 '.dump' > backup_{username}.sql"
         subprocess.call(cmd, shell=True)

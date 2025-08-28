@@ -15,7 +15,7 @@ Deze oefening toont een command injection vulnerability in een Django management
 - Linux besturingssysteem
 - Python 3.7+
 - Django 3.0+
-- MySQL (voor mysqldump commando)
+- SQLite3 (standaard beschikbaar in de meeste Linux distributies)
 
 ## 🚀 Installatie
 
@@ -40,11 +40,11 @@ De vulnerability zit in `vulndemo/vulndemo/management/commands/backup_user.py`:
 
 ```python
 # KWETSBAAR: Direct user input in shell command
-cmd = f"mysqldump -u root mydb_users_{username} > backup_{username}.sql"
+cmd = f"sqlite3 db.sqlite3 '.dump' > backup_{username}.sql"
 subprocess.call(cmd, shell=True)
 ```
 
-Het probleem is dat de `username` parameter direct in een shell commando wordt geplaatst zonder validatie.
+Het probleem is dat de `username` parameter direct in een shell commando wordt geplaatst zonder validatie. Het `sqlite3` commando is gebruikt omdat het standaard beschikbaar is in de meeste Linux distributies.
 
 ## 🎮 Gebruik
 
@@ -74,7 +74,7 @@ python manage.py backup_user --username "test; ifconfig"
 ## 🔍 Hoe het werkt
 
 1. Het Django management commando neemt een `--username` parameter
-2. Deze wordt direct in een `mysqldump` commando geplaatst
+2. Deze wordt direct in een `sqlite3` commando geplaatst
 3. Door de username te manipuleren met shell operators (`;`, `&&`, `|`), kunnen willekeurige commando's worden uitgevoerd
 4. Het `shell=True` argument maakt dit mogelijk
 
@@ -84,12 +84,12 @@ Om deze vulnerability te voorkomen:
 
 ```python
 # ❌ ONVEILIG
-cmd = f"mysqldump -u root mydb_users_{username} > backup_{username}.sql"
+cmd = f"sqlite3 db.sqlite3 '.dump' > backup_{username}.sql"
 subprocess.call(cmd, shell=True)
 
 # ✅ VEILIG
-import shlex
-args = ["mysqldump", "-u", "root", f"mydb_users_{username}"]
+import subprocess
+args = ["sqlite3", "db.sqlite3", ".dump"]
 with open(f"backup_{username}.sql", "w") as f:
     subprocess.run(args, stdout=f, shell=False)
 ```
@@ -104,13 +104,13 @@ with open(f"backup_{username}.sql", "w") as f:
 
 ## 🔧 Troubleshooting
 
-### mysqldump niet gevonden
+### sqlite3 niet gevonden
 ```bash
-# Installeer MySQL client
-sudo apt-get install mysql-client
+# Installeer SQLite3 (meestal al geïnstalleerd)
+sudo apt-get install sqlite3
 
 # Of voor Ubuntu/Debian
-sudo apt-get install default-mysql-client
+sudo apt-get install sqlite3
 ```
 
 ### Permissie problemen
@@ -121,7 +121,8 @@ chmod 755 .
 
 ## 📝 Notities
 
-- Deze demo werkt alleen in Linux omdat `mysqldump` een Linux/Unix commando is
+- Deze demo werkt alleen in Linux omdat het gebruik maakt van standaard Linux commando's
+- Het `sqlite3` commando is gekozen omdat het standaard beschikbaar is in de meeste Linux distributies
 - Voor Windows zou je een equivalent commando moeten gebruiken
 - De vulnerability is opzettelijk eenvoudig gehouden voor educatieve doeleinden
 
