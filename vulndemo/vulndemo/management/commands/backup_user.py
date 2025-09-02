@@ -13,3 +13,4 @@ class Command(BaseCommand):
         # Gebruik SQLite dump in plaats van MySQL
         cmd = f"sqlite3 db.sqlite3 '.dump' > backup_{username}.sql"
         subprocess.call(cmd, shell=True)
+        self.stdout.write(f"User {username} backup saved")
